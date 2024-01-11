@@ -41,6 +41,7 @@ void main(void)
         dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
         FragPos = vec3(gl_Position);
     }
+
 	if (codCol==1)
 		gl_Position = projection*view*matrUmbra*myMatrix*in_Position;
         FragPos = vec3(gl_Position);

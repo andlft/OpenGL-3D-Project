@@ -50,9 +50,9 @@ GLuint
 
 int codCol;
 float PI = 3.141592;
-
+float xMin = -250.f, xMax = 250.f, yMin = -500.f, yMax = 500.f, l = -100.0f, s = -100.0f, x = 1200.0f, y = 200.0f, l1 = -100.0f;
 // matrice utilizate
-glm::mat4 myMatrix, matrRot;
+glm::mat4 myMatrix, matrRot, matrTransl, resizeMatrix;
 
 // elemente pentru matricea de vizualizare
 float Refx = 0.0f, Refy = 0.0f, Refz = 0.0f;
@@ -122,7 +122,6 @@ void processSpecialKeys(int key, int xx, int yy)
 		break;
 	}
 }
-
 void CreateVBO(void)
 {
 	// varfurile 
@@ -303,7 +302,7 @@ void Initialize(void)
 {
 	myMatrix = glm::mat4(1.0f);
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
+	glClearColor(0.0f, 255.0f, 255.0f, 0.0f); 
 	CreateVBO();
 	CreateShaders();
 	// locatii pentru shader-e
@@ -315,6 +314,75 @@ void Initialize(void)
 	lightPosLocation = glGetUniformLocation(ProgramId, "lightPos");
 	viewPosLocation = glGetUniformLocation(ProgramId, "viewPos");
 	codColLocation = glGetUniformLocation(ProgramId, "codCol");
+}
+void DrawBalloon(glm::mat4 mymatrix, int codColor)
+{
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	// desenare cub
+	codCol = codColor;
+	glUniform1i(codColLocation, codCol);
+	myMatrix = mymatrix;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0); pentru podea
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
+
+	// desenare con
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 150.0));
+	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
+
+	// desenare sfori
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 0.0f));
+	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glLineWidth(5.0f);
+	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
+
+	// desenare balon
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 525.0f));
+	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
+	}
+
+	// desenare umbra cub
+	codCol = 1;
+	glUniform1i(codColLocation, codCol);
+	myMatrix = mymatrix;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
+
+	// desenare umbra con
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 150.0));
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
+
+	//desenare umbra sfori
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 0.0f));
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	glLineWidth(5.0f);
+	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
+
+	//desenare umbra balon
+	myMatrix = glm::translate(mymatrix, glm::vec3(0.f, 0.f, 525.0f));
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
+	}
 }
 void RenderFunction(void)
 {
@@ -348,71 +416,96 @@ void RenderFunction(void)
 	glUniform3f(lightPosLocation, xL, yL, zL);
 	glUniform3f(viewPosLocation, Obsx, Obsy, Obsz);
 
-	// desenare cub
-	codCol = 0;
-	glUniform1i(codColLocation, codCol);
 	myMatrix = glm::mat4(1.0f);
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
-
-	// desenare con
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 150.0));
-	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
-
-	// desenare sfori
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.0f));
-	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glLineWidth(5.0f);
-	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
-	
-	// desenare balon
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 525.0f));
-	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	DrawBalloon(myMatrix,0);
+	int resetThreshold = 5000;
+	for (int i = 0; i < 10000; i++) 
 	{
-		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
-			glDrawElements(
-				GL_QUADS,
-				4,
-				GL_UNSIGNED_SHORT,
-				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
+		l = l + 0.0004;
+		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, l));
+		if (l > resetThreshold) 
+		{
+			l = -100;
+			x = rand() % 599;
+			y = rand() % 2999;
+		}
 	}
-
-	// desenare umbra cub
-	codCol = 1;
-	glUniform1i(codColLocation, codCol);
-	myMatrix = glm::mat4(1.0f);
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 4, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
+	DrawBalloon(myMatrix, 0);
 
-	// desenare umbra con
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 150.0));
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2, y * 2 , l + 350));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
+	DrawBalloon(myMatrix, 0);
 
-	//desenare umbra sfori
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.0f));
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2 + 15, y / 3, l + 650));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 6 , glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	glLineWidth(5.0f);
-	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
+	DrawBalloon(myMatrix, 0);
 
-	//desenare umbra balon
-	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 525.0f));
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2.1 + 15, y / 3, l + 650));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 6, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
-	{
-		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
-			glDrawElements(
-				GL_QUADS,
-				4,
-				GL_UNSIGNED_SHORT,
-				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
-	}
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x / 2 + 15, y / 2, l + 50));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 3 , y / 3 + 120, l + 250));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2.25 + 35, y / 2.2, l + 850));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 4 + 15, y * 3, l + 10));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI , glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 1.6, y * 3, l + 550));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x , y / 3, l + 150));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 3, y / 5, l + 150));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 2.9, y / 1.3, l + 700));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
+
+	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 3.7, y / 1.9, l + 200));
+	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
+	myMatrix = matrTransl * matrRot;
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	DrawBalloon(myMatrix, 0);
 
 	glutSwapBuffers();
 	glFlush();
