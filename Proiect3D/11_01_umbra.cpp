@@ -29,6 +29,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <ctime>
+#include <vector>
 
 
 //  Identificatorii obiectelor de tip OpenGL; 
@@ -50,7 +52,12 @@ GLuint
 
 int codCol;
 float PI = 3.141592;
-float xMin = -250.f, xMax = 250.f, yMin = -500.f, yMax = 500.f, l = -100.0f, s = -100.0f, x = 1200.0f, y = 200.0f, l1 = -100.0f;
+std::vector<int> colornumbers = { 0, 2, 3, 4 };
+std::vector<int> xpos(10001);
+std::vector<int> ypos(10001);
+float l = 0.0f, s = -100.0f, x = 1200.0f, y = 200.0f, l1 = -100.0f;
+int resetThreshold;
+int xposition, yposition, i, j, xmax, xmin, ymax, ymin, q;
 // matrice utilizate
 glm::mat4 myMatrix, matrRot, matrTransl, resizeMatrix;
 
@@ -298,9 +305,26 @@ void DestroyShaders(void)
 	glDeleteProgram(ProgramId);
 }
 
+int getRandomNumber(const std::vector<int>& numbers) {
+	// Generate a random index to choose a number from the vector
+	int randomIndex = std::rand() % numbers.size();
+
+	// Return the randomly chosen number
+	return numbers[randomIndex];
+}
+
 void Initialize(void)
 {
 	myMatrix = glm::mat4(1.0f);
+	xmax = 5800;
+	xmin = -1700;
+	ymax = 3000;
+	ymin = -1400;
+	for (j = 1; j <= 21; j++)
+	{
+		xpos[j] = rand() % (xmax - xmin + 1) + xmin;
+		ypos[j] = rand() % (ymax - ymin + 1) + ymin;
+	}
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
 	glClearColor(0.0f, 255.0f, 255.0f, 0.0f); 
 	CreateVBO();
@@ -390,7 +414,7 @@ void RenderFunction(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-	
+
 	//pozitia observatorului
 	Obsx = Refx + dist * cos(alpha) * cos(beta);
 	Obsy = Refy + dist * cos(alpha) * sin(beta);
@@ -420,94 +444,16 @@ void RenderFunction(void)
 
 	myMatrix = glm::mat4(1.0f);
 	DrawBalloon(myMatrix,0);
-	int resetThreshold = 5000;
-	for (int i = 0; i < 10000; i++) 
+	//vector random pt x,y
+	l = l + 0.8;
+	for (int i = 1; i <= 20; i++)
 	{
-		l = l + 0.0004;
-		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, l));
-		if (l > resetThreshold) 
-		{
-			l = -100;
-			x = rand() % 599;
-			y = rand() % 2999;
-		}
+		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(xpos[i], ypos[i], std::fmod((l + i * 120), 5000.0f)));
+		matrRot = glm::rotate(glm::mat4(1.0f), PI / 4, glm::vec3(0.0, 0.0, 1.0));
+		myMatrix = matrTransl * matrRot;
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		DrawBalloon(myMatrix, colornumbers[i%4]);
 	}
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 4, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 0);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2, y * 2 , l + 350));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 2);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2 + 15, y / 3, l + 650));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 6 , glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 3);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2.1 + 15, y / 3, l + 650));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 6, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 4);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x / 2 + 15, y / 2, l + 50));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 3);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 3 , y / 3 + 120, l + 250));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 2);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 2.25 + 35, y / 2.2, l + 850));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 3);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(x * 4 + 15, y * 3, l + 10));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI , glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 2);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 1.6, y * 3, l + 550));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 4);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x , y / 3, l + 150));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 3);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 3, y / 5, l + 150));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 4);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 2.9, y / 1.3, l + 700));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 3, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 4);
-
-	matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(-x * 3.7, y / 1.9, l + 200));
-	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
-	myMatrix = matrTransl * matrRot;
-	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	DrawBalloon(myMatrix, 2);
 
 	glutSwapBuffers();
 	glFlush();
