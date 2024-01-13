@@ -24,9 +24,7 @@ uniform int codCol;
  
 void main(void)
   {
-    if (codCol==0) // pentru codCol==0 este aplicata iluminarea
-    {
-  	// Ambient
+    // Ambient
     float ambientStrength = 0.2f;
     vec3 ambient = ambientStrength * lightColor;
   	
@@ -44,9 +42,28 @@ void main(void)
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 1);
     vec3 specular = specularStrength * spec * lightColor;  
     vec3 emission=vec3(0.0, 0.0, 0.0);
-    vec3 result = emission+(ambient + diffuse + specular) * ex_Color;
-	out_Color = vec4(result, 1.0f);
+    vec3 result = emission+(ambient + diffuse + specular);
+    if (codCol==0) // pentru codCol==0 este aplicata iluminarea
+    {
+        result *= ex_Color;
     }
+
+    if (codCol==2) // rosu
+    {
+        result *= vec3(1.0f, 0.0f, 0.0f);
+    }
+
+     if (codCol==3) // albastru
+    {
+        result *= vec3(0.0f, 0.0f, 1.0f);
+    }
+
+     if (codCol==4) // galben
+    {
+        result *= vec3(1.0f, 1.0f, 0.0f);
+    }
+
+    out_Color = vec4(result, 1.0f);
 
     if (codCol==1) // pentru codCol==1 este desenata umbra
     {
