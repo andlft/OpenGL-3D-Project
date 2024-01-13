@@ -20,35 +20,33 @@
 #include <stdio.h>
 #include <math.h>			//	Biblioteca pentru calcule matematice;
 #include <GL/glew.h>        //  Definește prototipurile functiilor OpenGL si constantele necesare pentru programarea OpenGL moderna; 
-#include <GL/freeglut.h>    //	Include functii pentru: 
-							//	- gestionarea ferestrelor si evenimentelor de tastatura si mouse, 
-							//  - desenarea de primitive grafice precum dreptunghiuri, cercuri sau linii, 
+#include <GL/freeglut.h>    //	Include functii pentru:
+#include <ctime>			//	- gestionarea ferestrelor si evenimentelor de tastatura si mouse, 
+#include <vector>			//  - desenarea de primitive grafice precum dreptunghiuri, cercuri sau linii, 
 							//  - crearea de meniuri si submeniuri;
 #include "loadShaders.h"	//	Fisierul care face legatura intre program si shadere;
 #include "glm/glm.hpp"		//	Bibloteci utilizate pentru transformari grafice;
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include <ctime>
-#include <vector>
-
+#include "glm/geometric.hpp"
 
 //  Identificatorii obiectelor de tip OpenGL; 
 GLuint
-	VaoId,
-	VboId,
-	EboId,
-	ColorBufferId,
-	ProgramId,
-	myMatrixLocation,
-	matrUmbraLocation,
-	viewLocation,
-	projLocation,
-	matrRotlLocation,
-	lightColorLocation,
-	lightPosLocation,
-	viewPosLocation,
-	codColLocation;
+VaoId,
+VboId,
+EboId,
+ColorBufferId,
+ProgramId,
+myMatrixLocation,
+matrUmbraLocation,
+viewLocation,
+projLocation,
+matrRotlLocation,
+lightColorLocation,
+lightPosLocation,
+viewPosLocation,
+codColLocation;
 
 int codCol;
 float PI = 3.141592;
@@ -62,8 +60,8 @@ int xposition, yposition, i, j, xmax, xmin, ymax, ymin, q;
 glm::mat4 myMatrix, matrRot, matrTransl, resizeMatrix;
 
 // elemente pentru matricea de vizualizare
-float Refx = 0.0f, Refy = 0.0f, Refz = 0.0f;
-float alpha = PI / 8, beta = 0.0f, dist = 400.0f;
+float Refx = 0.0f, Refy = 0.0f, Refz = 4000.0f;
+float alpha = PI, beta = PI, dist = 6000.0f;
 float Obsx, Obsy, Obsz;
 float Vx = 0.0, Vy = 0.0, Vz = 1.0;
 glm::mat4 view;
@@ -73,7 +71,7 @@ float width = 800, height = 600, xwmin = -800.f, xwmax = 800, ywmin = -600, ywma
 glm::mat4 projection;
 
 // sursa de lumina
-float xL = 500.f, yL = 100.f, zL = 400.f;
+float xL = 5000000.f, yL = 1000000.f, zL = 4000000.f;
 
 // matricea umbrei
 float matrUmbra[4][4];
@@ -91,9 +89,11 @@ int vertex, index_aux;
 int startVertex = 270;
 int startIndex = 68;
 
+glm::quat rotQuat, rotQuat2;
+
 void processNormalKeys(unsigned char key, int x, int y)
 {
-	switch (key) 
+	switch (key)
 	{
 	case 'l':
 		Vx -= 0.1;
@@ -111,9 +111,9 @@ void processNormalKeys(unsigned char key, int x, int y)
 	if (key == 27)
 		exit(0);
 }
-void processSpecialKeys(int key, int xx, int yy) 
+void processSpecialKeys(int key, int xx, int yy)
 {
-	switch (key) 
+	switch (key)
 	{
 	case GLUT_KEY_LEFT:
 		beta -= 0.01;
@@ -122,50 +122,50 @@ void processSpecialKeys(int key, int xx, int yy)
 		beta += 0.01;
 		break;
 	case GLUT_KEY_UP:
-		alpha += 0.01;
+		alpha += 0.0;
 		break;
 	case GLUT_KEY_DOWN:
-		alpha -= 0.01;
+		alpha -= 0.0;
 		break;
 	}
 }
 void CreateVBO(void)
 {
 	// varfurile 
-	GLfloat Vertices[10000] = 
+	GLfloat Vertices[10000] =
 	{
 		// coordonate                   // culori			// normale
 		// varfuri "ground"
-	   -15000.0f,  -15000.0f, 0.0f, 1.0f,  0.5f, 0.5f, 0.9f,  0.0f, 0.0f, 1.0f,
-		15000.0f,  -15000.0f, 0.0f, 1.0f,  0.5f, 0.5f, 0.9f,  0.0f, 0.0f, 1.0f,
-		15000.0f,  15000.0f,  0.0f, 1.0f,  0.5f, 0.5f, 0.9f,  0.0f, 0.0f, 1.0f,
-	   -15000.0f,  15000.0f,  0.0f, 1.0f,  0.5f, 0.5f, 0.9f,  0.0f, 0.0f, 1.0f,
+	   -150000.0f,  -150000.0f, -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
+		150000.0f,  -150000.0f, -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
+		150000.0f,  150000.0f,  -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
+	   -150000.0f,  150000.0f,  -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
 	   // varfuri cub
-		-50.0f,  -50.0f, 50.0f, 1.0f,   1.0f, 0.5f, 0.2f,  -1.0f, -1.0f, -1.0f,
-		 50.0f,  -50.0f,  50.0f, 1.0f,  1.0f, 0.5f, 0.2f,  1.0f, -1.0f, -1.0f,
-		 50.0f,  50.0f,  50.0f, 1.0f,   1.0f, 0.5f, 0.2f,  1.0f, 1.0f, -1.0f,
-		-50.0f,  50.0f, 50.0f, 1.0f,    1.0f, 0.5f, 0.2f,  -1.0f, 1.0f, -1.0f,
-		-50.0f,  -50.0f, 150.0f, 1.0f,  1.0f, 0.5f, 0.2f,  -1.0f, -1.0f, 1.0f,
-		 50.0f,  -50.0f,  150.0f, 1.0f, 1.0f, 0.5f, 0.2f,  1.0f, -1.0f, 1.0f,
-		 50.0f,  50.0f,  150.0f, 1.0f,  1.0f, 0.5f, 0.2f,  1.0f, 1.0f, 1.0f,
-		-50.0f,  50.0f, 150.0f, 1.0f,   1.0f, 0.5f, 0.2f,  -1.0f, 1.0f, 1.0f,
+		-50.0f,  -50.0f, -550.0f, 1.0f,   1.0f, 0.5f, 0.2f,  -1.0f, -1.0f, -1.0f,
+		 50.0f,  -50.0f,  -550.0f, 1.0f,  1.0f, 0.5f, 0.2f,  1.0f, -1.0f, -1.0f,
+		 50.0f,  50.0f,  -550.0f, 1.0f,   1.0f, 0.5f, 0.2f,  1.0f, 1.0f, -1.0f,
+		-50.0f,  50.0f, -550.0f, 1.0f,    1.0f, 0.5f, 0.2f,  -1.0f, 1.0f, -1.0f,
+		-50.0f,  -50.0f, -450.0f, 1.0f,  1.0f, 0.5f, 0.2f,  -1.0f, -1.0f, 1.0f,
+		 50.0f,  -50.0f,  -450.0f, 1.0f, 1.0f, 0.5f, 0.2f,  1.0f, -1.0f, 1.0f,
+		 50.0f,  50.0f,  -450.0f, 1.0f,  1.0f, 0.5f, 0.2f,  1.0f, 1.0f, 1.0f,
+		-50.0f,  50.0f, -450.0f, 1.0f,   1.0f, 0.5f, 0.2f,  -1.0f, 1.0f, 1.0f,
 		// varfuri con
-		 -40.0f, -69.28f, 200.0f, 1.0f,   0.1f, 1.0f, 0.2f, -40.0f, -69.28f, -80.0f,
-		 40.0f, -69.28f, 200.0f, 1.0f,    0.1f, 1.0f, 0.2f, 40.0f, -69.28f, -80.0f,
-		 80.0f, 0.0f, 200.0f, 1.0f,       0.1f, 1.0f, 0.2f, 80.0f, 0.0f, -80.0f,
-		 40.0f, 69.28f, 200.0f, 1.0f,     0.1f, 1.0f, 0.2f, 40.0f, 69.28f, -80.0f,
-		-40.0f, 69.28f, 200.0f, 1.0f,     0.1f, 1.0f, 0.2f, -40.0f, 69.28f, -80.0f,
-		-80.0f, 0.0f,  200.0f, 1.0f,      0.1f, 1.0f, 0.2f, -80.0f, 0.0f, -80.0f,
-		  0.0f, 0.0f, 100.0f, 1.0f,       0.3f, 1.0f, 0.2f, 0.0f, 0.0f, -1.0f,
-		// varfuri sfori
-		-50.0f,  -50.0f, 150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
-		-100.0f, -100.0f, 450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
-		50.0f,  -50.0f,  150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, -1.0f, -1.0f,
-		100.0f, -100.0f , 450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
-		50.0f,  50.0f,  150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
-		100.0f, 100.0f, 450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
-		-50.0f,  50.0f, 150.0f, 1.0f,    0.0f, 0.0f, 0.0f,  -1.0f, 1.0f, -1.0f,
-		-100.0f, 100.0f, 450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
+		 -40.0f, -69.28f, -250.0f, 1.0f,   0.1f, 1.0f, 0.2f, -40.0f, -69.28f, -80.0f,
+		 40.0f, -69.28f, -250.0f, 1.0f,    0.1f, 1.0f, 0.2f, 40.0f, -69.28f, -80.0f,
+		 80.0f, 0.0f, -250.0f, 1.0f,       0.1f, 1.0f, 0.2f, 80.0f, 0.0f, -80.0f,
+		 40.0f, 69.28f, -250.0f, 1.0f,     0.1f, 1.0f, 0.2f, 40.0f, 69.28f, -80.0f,
+		-40.0f, 69.28f, -250.0f, 1.0f,     0.1f, 1.0f, 0.2f, -40.0f, 69.28f, -80.0f,
+		-80.0f, 0.0f,  -250.0f, 1.0f,      0.1f, 1.0f, 0.2f, -80.0f, 0.0f, -80.0f,
+		  0.0f, 0.0f, -350.0f, 1.0f,       0.3f, 1.0f, 0.2f, 0.0f, 0.0f, -1.0f,
+		  // varfuri sfori
+		  -50.0f,  -50.0f, -450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
+		  -100.0f, -100.0f,-150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
+		  50.0f,  -50.0f,  -450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, -1.0f, -1.0f,
+		  100.0f, -100.0f ,-150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  -1.0f, -1.0f, -1.0f,
+		  50.0f,  50.0f,  -450.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
+		  100.0f, 100.0f, -150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
+		  -50.0f,  50.0f, -450.0f, 1.0f,    0.0f, 0.0f, 0.0f,  -1.0f, 1.0f, -1.0f,
+		  -100.0f, 100.0f, -150.0f, 1.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f, -1.0f,
 	};
 
 	// indicii pentru varfuri
@@ -218,7 +218,7 @@ void CreateVBO(void)
 			Vertices[vertex + 8] = y_vf;
 			Vertices[vertex + 9] = z_vf;
 
-			Indices[(vertex - startVertex)/10 + startIndex] = (vertex - startVertex)/10 + 27;
+			Indices[(vertex - startVertex) / 10 + startIndex] = (vertex - startVertex) / 10 + 27;
 			index_aux = parr * (NR_MERID)+merid;
 			Indices[startIndex + (NR_PARR + 1) * NR_MERID + index_aux] = (vertex - startVertex) / 10 + 27;
 
@@ -313,17 +313,17 @@ int getRandomNumber(const std::vector<int>& numbers) {
 void Initialize(void)
 {
 	myMatrix = glm::mat4(1.0f);
-	xmax = 5800;
-	xmin = -1700;
-	ymax = 3000;
-	ymin = -1400;
+	xmax = 2000;
+	xmin = -2000;
+	ymax = 2000;
+	ymin = -2000;
 	for (j = 1; j <= 21; j++)
 	{
 		xpos[j] = rand() % (xmax - xmin + 1) + xmin;
 		ypos[j] = rand() % (ymax - ymin + 1) + ymin;
 	}
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
-	glClearColor(0.0f, 255.0f, 255.0f, 0.0f); 
+	glClearColor(0.0f, 255.0f, 255.0f, 0.0f);
 	CreateVBO();
 	CreateShaders();
 	// locatii pentru shader-e
@@ -344,7 +344,6 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	glUniform1i(codColLocation, codCol);
 	myMatrix = balloonMatrix;
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0); pentru podea
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
 
 	// desenare sfori
@@ -357,13 +356,13 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	codCol = codColor;
 	glUniform1i(codColLocation, codCol);
 	// desenare con
-	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 150.0));
+	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 0.0));
 	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
 
 	// desenare balon
-	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 525.0f));
+	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, -75.0f));
 	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
@@ -384,7 +383,7 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
 
 	// desenare umbra con
-	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 150.0));
+	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 0.0));
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_SHORT, (void*)(42 * sizeof(GLushort)));
 
@@ -395,7 +394,7 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
 
 	//desenare umbra balon
-	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, 525.0f));
+	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, -75.0f));
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
 	{
@@ -427,7 +426,7 @@ void RenderFunction(void)
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &projection[0][0]);
 
 	// matricea pentru umbra
-	float D = -10.0f;
+	float D = 1000.0f;
 	matrUmbra[0][0] = zL + D; matrUmbra[0][1] = 0; matrUmbra[0][2] = 0; matrUmbra[0][3] = 0;
 	matrUmbra[1][0] = 0; matrUmbra[1][1] = zL + D; matrUmbra[1][2] = 0; matrUmbra[1][3] = 0;
 	matrUmbra[2][0] = -xL; matrUmbra[2][1] = -yL; matrUmbra[2][2] = D; matrUmbra[2][3] = -1;
@@ -439,16 +438,22 @@ void RenderFunction(void)
 	glUniform3f(lightPosLocation, xL, yL, zL);
 	glUniform3f(viewPosLocation, Obsx, Obsy, Obsz);
 
-	myMatrix = glm::mat4(1.0f);
-	DrawBalloon(myMatrix,0);
+	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1100.f));
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	codCol = 0;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	//vector random pt x,y
 	l = l + 0.8;
-	for (int i = 1; i <= 20; i++)
+	for (int i = 1; i <= 10; i++)
 	{
-		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(xpos[i], ypos[i], std::fmod((l + i * 350), 5000.0f)));
-		myMatrix = matrTransl;
+		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(xpos[i], ypos[i], std::fmod((l + i * 1000), 10000.0f)));
+		rotQuat = glm::angleAxis((0.2f * sinf(l * (i % 3 - 1.5f) / 100) - 0.1f), glm::vec3(1.0f, 0.0f, 0.0f));
+		rotQuat2 = glm::angleAxis((l * (i % 5 - 1.5f) / 300), glm::vec3(0.0f, 0.0f, 1.0f));
+		matrRot = glm::mat4_cast(rotQuat * rotQuat2);
+		myMatrix = matrTransl * matrRot;
 		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-		DrawBalloon(myMatrix, colornumbers[i%4]);
+		DrawBalloon(myMatrix, colornumbers[i % 4]);
 	}
 
 	glutSwapBuffers();
@@ -462,6 +467,7 @@ void Cleanup(void)
 
 int main(int argc, char* argv[])
 {
+	srand(time(0));
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowPosition(100, 100);

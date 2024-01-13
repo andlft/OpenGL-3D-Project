@@ -33,13 +33,13 @@ void main(void)
   {
     ex_Color=in_Color;
     gl_Position = projection*view*myMatrix*in_Position;
-    Normal =mat3(projection*view*myMatrix)*in_Normal; 
-    inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
-    inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
-    dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
-    FragPos = vec3(gl_Position);
+    Normal =mat3(view*myMatrix)*in_Normal; 
+    inLightPos = vec3(view* vec4(lightPos, 1.0f));
+    inViewPos =vec3(view*vec4(viewPos, 1.0f));
+    dir = mat3(view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
+    FragPos = vec3(view*myMatrix*in_Position);
 
 	if (codCol==1)
 		gl_Position = projection*view*matrUmbra*myMatrix*in_Position;
-        FragPos = vec3(gl_Position);
+        FragPos = vec3(view*myMatrix*in_Position);
    } 
