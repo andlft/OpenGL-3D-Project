@@ -32,45 +32,12 @@ uniform int codCol;
 void main(void)
   {
     ex_Color=in_Color;
-   	if (codCol==0)
-    {
-		gl_Position = projection*view*myMatrix*in_Position;
-        Normal =mat3(projection*view*myMatrix)*in_Normal; 
-        inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
-        inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
-        dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
-        FragPos = vec3(gl_Position);
-    }
-
-    if (codCol==2)
-    {
-		gl_Position = projection*view*myMatrix*in_Position;
-        Normal =mat3(projection*view*myMatrix)*in_Normal; 
-        inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
-        inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
-        dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
-        FragPos = vec3(gl_Position);
-    }
-
-    if (codCol==3)
-    {
-		gl_Position = projection*view*myMatrix*in_Position;
-        Normal =mat3(projection*view*myMatrix)*in_Normal; 
-        inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
-        inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
-        dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
-        FragPos = vec3(gl_Position);
-    }
-
-    if (codCol==4)
-    {
-		gl_Position = projection*view*myMatrix*in_Position;
-        Normal =mat3(projection*view*myMatrix)*in_Normal; 
-        inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
-        inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
-        dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
-        FragPos = vec3(gl_Position);
-    }
+    gl_Position = projection*view*myMatrix*in_Position;
+    Normal =mat3(projection*view*myMatrix)*in_Normal; 
+    inLightPos = vec3(projection*view*myMatrix* vec4(lightPos, 1.0f));
+    inViewPos =vec3(projection*view*myMatrix*vec4(viewPos, 1.0f));
+    dir = mat3(projection*view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
+    FragPos = vec3(gl_Position);
 
 	if (codCol==1)
 		gl_Position = projection*view*matrUmbra*myMatrix*in_Position;
