@@ -175,7 +175,7 @@ xcopy /y /d "$(ProjectDir)lib\x64\SOIL\*.dll" "$(OutDir)" &amp;</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="11_01_umbra.cpp" />
+    <ClCompile Include="Proiect3D.cpp" />
     <ClCompile Include="include\glm\detail\glm.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\imageloader.cpp" />
@@ -484,8 +484,8 @@ xcopy /y /d "$(ProjectDir)lib\x64\SOIL\*.dll" "$(OutDir)" &amp;</Command>
     <Text Include="include\glm\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="11_01_Shader.frag" />
-    <None Include="11_01_Shader.vert" />
+    <None Include="Shader.frag" />
+    <None Include="Shader.vert" />
     <None Include="example.frag" />
     <None Include="example.vert" />
     <None Include="include\glm\detail\func_common.inl" />

@@ -102,7 +102,7 @@
     <ClCompile Include="include\glm\detail\glm.cpp">
       <Filter>Header Files\template-built-ins\glm\detail</Filter>
     </ClCompile>
-    <ClCompile Include="11_01_umbra.cpp">
+    <ClCompile Include="Proiect3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1479,10 +1479,10 @@
     <None Include="lib\x64\GL\DLLs\glew32.dll">
       <Filter>Resource Files\template-built-ins\DLLs\64b</Filter>
     </None>
-    <None Include="11_01_Shader.frag">
+    <None Include="Shader.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="11_01_Shader.vert">
+    <None Include="Shader.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
