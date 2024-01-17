@@ -31,45 +31,15 @@
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <string>
+#include <vector>
 
-float skyboxVertices[] =
-{
-	//   Coordinates
-	-1.0f, -1.0f,  1.0f,//        7--------6
-	 1.0f, -1.0f,  1.0f,//       /|       /|
-	 1.0f, -1.0f, -1.0f,//      4--------5 |
-	-1.0f, -1.0f, -1.0f,//      | |      | |
-	-1.0f,  1.0f,  1.0f,//      | 3------|-2
-	 1.0f,  1.0f,  1.0f,//      |/       |/
-	 1.0f,  1.0f, -1.0f,//      0--------1
-	-1.0f,  1.0f, -1.0f
-};
 
-unsigned int skyboxIndices[] =
-{
-	// Right
-	1, 2, 6,
-	6, 5, 1,
-	// Left
-	0, 4, 7,
-	7, 3, 0,
-	// Top
-	4, 5, 6,
-	6, 7, 4,
-	// Bottom
-	0, 3, 2,
-	2, 1, 0,
-	// Back
-	0, 1, 5,
-	5, 4, 0,
-	// Front
-	3, 7, 6,
-	6, 2, 3
-};
 
 
 //  Identificatorii obiectelor de tip OpenGL; 
 GLuint
+skyboxVAO,
+skyboxVBO,
 	VaoId,
 	VboId,
 	EboId,
@@ -293,8 +263,6 @@ void CreateVBO(void)
 		}
 	}
 
-
-
 	glGenVertexArrays(1, &VaoId);
 	glGenBuffers(1, &VboId);
 	glGenBuffers(1, &EboId);
@@ -316,77 +284,72 @@ void CreateVBO(void)
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (GLvoid*)(7 * sizeof(GLfloat)));
 }
 
-unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
-unsigned int cubemapTexture;
+void CreateSkyboxVBO(void)
+{
+	GLfloat skyboxVertices[1000] = {
+		// skybox           
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
 
-void CreateSkyboxVBO(void) {
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1, &skyboxVBO);
-	glGenBuffers(1, &skyboxEBO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
 
-	// All the faces of the cubemap (make sure they are in this exact order)
-	std::string facesCubemap[6] =
-	{
-		"./right.jpg",
-		"./left.jpg",
-		"./top.jpg",
-		"./bottom.jpg",
-		"./front.jpg",
-		"./back.jpg"
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
 	};
 
-	// Creates the cubemap texture object
-	
-	glGenTextures(1, &cubemapTexture);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// These are very important to prevent seams
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	// This might help with seams on some systems
-	//glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	// Create VBO
 
-	// Cycles through all the textures and attaches them to the cubemap object
-	for (unsigned int i = 0; i < 6; i++)
-	{
-		int width, height, nrChannels;
-		unsigned char* data = stbi_load(facesCubemap[i].c_str(), &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			//stbi_set_flip_vertically_on_load(false);
-			glTexImage2D
-			(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-				0,
-				GL_RGB,
-				width,
-				height,
-				0,
-				GL_RGB,
-				GL_UNSIGNED_BYTE,
-				data
-			);
-			stbi_image_free(data);
-		}
-		else
-		{
-			//std::cout << "Failed to load texture: " << facesCubemap[i] << std::endl;
-			stbi_image_free(data);
-		}
-	}
+	glGenBuffers(1, &skyboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+	// Create VAO
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+
+	// Specify attribute pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	// Unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 };
+
 
 void DestroyVBO(void)
 {
@@ -405,8 +368,6 @@ void CreateShaders(void)
 	ProgramId = LoadShaders("11_01_Shader.vert", "11_01_Shader.frag");
 	glUseProgram(ProgramId);
 
-	ProgramId2 = LoadShaders("skybox.vert", "skybox.frag");
-	glUseProgram(ProgramId2);
 }
 
 void DestroyShaders(void)
@@ -432,6 +393,41 @@ void Initialize(void)
 	viewPosLocation = glGetUniformLocation(ProgramId, "viewPos");
 	codColLocation = glGetUniformLocation(ProgramId, "codCol");
 }
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			//std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+
+
 void RenderFunction(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -517,7 +513,7 @@ void RenderFunction(void)
 	glLineWidth(5.0f);
 	glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (void*)(60 * sizeof(GLushort)));
 
-	//desenare umbra baloncubemapTexture
+	//desenare umbra balon
 	myMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 525.0f));
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
@@ -531,44 +527,27 @@ void RenderFunction(void)
 	}
 
 
-	// Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
-	//glDepthFunc(GL_LEQUAL);
+	//skybox
+	std::vector<std::string> faces;
+	{
+		"right.jpg",
+			"left.jpg",
+			"top.jpg",
+			"bottom.jpg",
+			"front.jpg",
+			"back.jpg";
+	};
+	unsigned int cubemapTexture = loadCubemap(faces);
 
-	// Draw skybox
+	glDepthMask(GL_FALSE);
+	ProgramId2 = LoadShaders("skybox.vert", "skybox.frag");
 	glUseProgram(ProgramId2);
-	glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
-	view = glm::mat4(glm::mat3(glm::lookAt(Obs, PctRef, Vert)));// Remove translation part of the view matrix
-	projection = glm::perspective(glm::radians(fov), (GLfloat)width / (GLfloat)height, znear, zfar);
-	glm::mat4 viewProjection = projection * view;
-	glUniformMatrix4fv(glGetUniformLocation(ProgramId2, "viewProjection"), 1, GL_FALSE, glm::value_ptr(viewProjection));
-	// Draw skybox cube
-	glBindVertexArray(skyboxVAO);
+	// ... set view and projection matrix
+	//glBindVertexArray(skyboxVAO);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-	glDepthFunc(GL_LESS); // Reset depth function
-	glUseProgram(ProgramId);
-
-	//skyboxShader.Activate();
-	//glm::mat4 view = glm::mat4(1.0f);
-	//glm::mat4 projection = glm::mat4(1.0f);
-	// We make the mat4 into a mat3 and then a mat4 again in order to get rid of the last row and column
-	// The last row and column affect the translation of the skybox (which we don't want to affect)
-	//view = glm::mat4(glm::mat3(glm::lookAt(camera.Position, camera.Position + camera.Orientation, camera.Up)));
-	//projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
-	//glUniformMatrix4fv(glGetUniformLocation(myMatrixLocation, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	//glUniformMatrix4fv(glGetUniformLocation(myMatrixLocation, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-	// Draws the cubemap as the last object so we can save a bit of performance by discarding all fragments
-	// where an object is present (a depth of 1.0f will always fail against any object's depth value)
-	glBindVertexArray(skyboxVAO);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-
-	// Switch back to the normal depth function
-	glDepthFunc(GL_LESS);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthMask(GL_TRUE);
+	
 
 	glutSwapBuffers();
 	glFlush();
