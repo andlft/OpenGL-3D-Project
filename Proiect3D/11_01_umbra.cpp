@@ -20,7 +20,8 @@
 #include <stdio.h>
 #include <math.h>			//	Biblioteca pentru calcule matematice;
 #include <GL/glew.h>        //  Definește prototipurile functiilor OpenGL si constantele necesare pentru programarea OpenGL moderna; 
-#include <GL/freeglut.h>    //	Include functii pentru: 
+#include <GL/freeglut.h>    //	Include functii pentru:
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 							//	- gestionarea ferestrelor si evenimentelor de tastatura si mouse, 
 							//  - desenarea de primitive grafice precum dreptunghiuri, cercuri sau linii, 
@@ -32,6 +33,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include <string>
 #include <vector>
+#include <iostream>
 
 
 
@@ -49,6 +51,8 @@ skyboxVBO,
 	myMatrixLocation,
 	matrUmbraLocation,
 	viewLocation,
+	viewLocation2,
+	projLocation2,
 	projLocation,
 	matrRotlLocation,
 	lightColorLocation,
@@ -91,6 +95,7 @@ float radius = 200;
 int vertex, index_aux;
 int startVertex = 270;
 int startIndex = 68;
+unsigned int cubemapTexture;
 
 
 void processNormalKeys(unsigned char key, int x, int y)
@@ -284,6 +289,36 @@ void CreateVBO(void)
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (GLvoid*)(7 * sizeof(GLfloat)));
 }
 
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++) {
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data) {
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+						 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else {
+			std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+
 void CreateSkyboxVBO(void)
 {
 	GLfloat skyboxVertices[1000] = {
@@ -348,6 +383,18 @@ void CreateSkyboxVBO(void)
 	// Unbind VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	//skybox
+	std::vector<std::string> faces
+	{
+			"right.jpg",
+			"left.jpg",
+			"top.jpg",
+			"bottom.jpg",
+			"front.jpg",
+			"back.jpg"
+	};
+	cubemapTexture = loadCubemap(faces);
 };
 
 
@@ -367,6 +414,8 @@ void CreateShaders(void)
 {
 	ProgramId = LoadShaders("11_01_Shader.vert", "11_01_Shader.frag");
 	glUseProgram(ProgramId);
+	ProgramId2 = LoadShaders("skybox.vert", "skybox.frag");
+	glUseProgram(ProgramId2);
 
 }
 
@@ -379,7 +428,7 @@ void Initialize(void)
 {
 	myMatrix = glm::mat4(1.0f);
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	CreateVBO();
 	CreateSkyboxVBO();
 	CreateShaders();
@@ -388,45 +437,13 @@ void Initialize(void)
 	matrUmbraLocation = glGetUniformLocation(ProgramId, "matrUmbra");
 	viewLocation = glGetUniformLocation(ProgramId, "view");
 	projLocation = glGetUniformLocation(ProgramId, "projection");
+	viewLocation2 = glGetUniformLocation(ProgramId2, "view");
+	projLocation2 = glGetUniformLocation(ProgramId2, "projection");
 	lightColorLocation = glGetUniformLocation(ProgramId, "lightColor");
 	lightPosLocation = glGetUniformLocation(ProgramId, "lightPos");
 	viewPosLocation = glGetUniformLocation(ProgramId, "viewPos");
 	codColLocation = glGetUniformLocation(ProgramId, "codCol");
 }
-
-unsigned int loadCubemap(std::vector<std::string> faces)
-{
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-	int width, height, nrChannels;
-	for (unsigned int i = 0; i < faces.size(); i++)
-	{
-		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-			);
-			stbi_image_free(data);
-		}
-		else
-		{
-			//std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
-			stbi_image_free(data);
-		}
-	}
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	return textureID;
-}
-
-
 
 void RenderFunction(void)
 {
@@ -438,6 +455,7 @@ void RenderFunction(void)
 	Obsy = Refy + dist * cos(alpha) * sin(beta);
 	Obsz = Refz + dist * sin(alpha);
 
+	glUseProgram(ProgramId);
 	// matrice de vizualizare + proiectie
 	glm::vec3 Obs = glm::vec3(Obsx, Obsy, Obsz);   // se schimba pozitia observatorului	
 	glm::vec3 PctRef = glm::vec3(Refx, Refy, Refz); // pozitia punctului de referinta
@@ -460,6 +478,7 @@ void RenderFunction(void)
 	glUniform3f(lightPosLocation, xL, yL, zL);
 	glUniform3f(viewPosLocation, Obsx, Obsy, Obsz);
 
+	glBindVertexArray(VaoId);
 	// desenare cub
 	codCol = 0;
 	glUniform1i(codColLocation, codCol);
@@ -527,27 +546,16 @@ void RenderFunction(void)
 	}
 
 
-	//skybox
-	std::vector<std::string> faces;
-	{
-		"right.jpg",
-			"left.jpg",
-			"top.jpg",
-			"bottom.jpg",
-			"front.jpg",
-			"back.jpg";
-	};
-	unsigned int cubemapTexture = loadCubemap(faces);
-
-	glDepthMask(GL_FALSE);
-	ProgramId2 = LoadShaders("skybox.vert", "skybox.frag");
-	glUseProgram(ProgramId2);
-	// ... set view and projection matrix
-	//glBindVertexArray(skyboxVAO);
+	//// ... set view and projection matrix
+	glBindVertexArray(skyboxVAO);
+    glUseProgram(ProgramId2);
+	glDepthFunc(GL_LEQUAL);
+	view = glm::mat4(glm::mat3(view));
+	glUniformMatrix4fv(viewLocation2, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projLocation2, 1, GL_FALSE, &projection[0][0]);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glDepthMask(GL_TRUE);
-	
+	glDepthFunc(GL_LESS);
 
 	glutSwapBuffers();
 	glFlush();
