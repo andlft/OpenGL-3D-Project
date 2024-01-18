@@ -17,17 +17,26 @@
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/geometric.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include <string>
+#include <iostream>
 
 //  Identificatorii obiectelor de tip OpenGL; 
 GLuint
+skyboxVAO,
+skyboxVBO,
 VaoId,
 VboId,
 EboId,
 ColorBufferId,
 ProgramId,
+ProgramId2,
 myMatrixLocation,
 matrUmbraLocation,
 viewLocation,
+viewLocation2,
+projLocation2,
 projLocation,
 matrRotlLocation,
 lightColorLocation,
@@ -78,6 +87,7 @@ float radius = 200;
 int vertex, index_aux;
 int startVertex = 270;
 int startIndex = 68;
+unsigned int cubemapTexture;
 
 glm::quat rotQuat, rotQuat2;
 
@@ -272,6 +282,116 @@ void CreateVBO(void)
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (GLvoid*)(7 * sizeof(GLfloat)));
 }
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++) {
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data) {
+			stbi_set_flip_vertically_on_load(false);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else {
+			std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+void CreateSkyboxVBO(void)
+{
+	GLfloat skyboxVertices[1000] = {
+		// skybox           
+		-1.0f,  1.0f , -1.0f,
+		-1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
+
+		-1.0f, -1.0f ,  1.0f,
+		-1.0f, -1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
+
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+
+		-1.0f, -1.0f ,  1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f, -1.0f ,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
+
+		-1.0f,  1.0f , -1.0f,
+		 1.0f,  1.0f , -1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		-1.0f,  1.0f , -1.0f,
+
+		-1.0f, -1.0f , -1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		 1.0f, -1.0f ,  1.0f
+	};
+
+
+	// Create VBO
+
+	glGenBuffers(1, &skyboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+	// Create VAO
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+
+	// Specify attribute pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	// Unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	//skybox
+	std::vector<std::string> faces
+	{
+			"right3.jpg",
+			"left3.jpg",
+			"top3.jpg",
+			"bottom3.jpg",
+			"front4.jpg",
+			"back3.jpg"
+	};
+	cubemapTexture = loadCubemap(faces);
+};
+
 void DestroyVBO(void)
 {
 	glDisableVertexAttribArray(2);
@@ -288,11 +408,15 @@ void CreateShaders(void)
 {
 	ProgramId = LoadShaders("Shader.vert", "Shader.frag");
 	glUseProgram(ProgramId);
+
+	ProgramId2 = LoadShaders("skybox.vert", "skybox.frag");
+	//glUseProgram(ProgramId2);
 }
 
 void DestroyShaders(void)
 {
 	glDeleteProgram(ProgramId);
+	glDeleteProgram(ProgramId2);
 }
 
 int getRandomNumber(const std::vector<int>& numbers) {
@@ -329,6 +453,7 @@ void Initialize(void)
 
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
 	glClearColor(0.0f, 255.0f, 255.0f, 0.0f);
+	CreateSkyboxVBO();	
 	CreateVBO();
 	CreateShaders();
 	// locatii pentru shader-e
@@ -340,6 +465,8 @@ void Initialize(void)
 	lightPosLocation = glGetUniformLocation(ProgramId, "lightPos");
 	viewPosLocation = glGetUniformLocation(ProgramId, "viewPos");
 	codColLocation = glGetUniformLocation(ProgramId, "codCol");
+	viewLocation2 = glGetUniformLocation(ProgramId2, "view");
+	projLocation2 = glGetUniformLocation(ProgramId2, "projection");
 }
 
 void DrawSphere()
@@ -471,6 +598,8 @@ void RenderFunction(void)
 	Obsy = Refy + dist * cos(alpha) * sin(beta);
 	Obsz = Refz + dist * sin(alpha);
 
+	glBindVertexArray(VaoId);
+	glUseProgram(ProgramId);
 	// matrice de vizualizare + proiectie
 	glm::vec3 Obs = glm::vec3(Obsx, Obsy, Obsz);   // se schimba pozitia observatorului	
 	glm::vec3 PctRef = glm::vec3(Refx, Refy, Refz); // pozitia punctului de referinta
@@ -498,7 +627,26 @@ void RenderFunction(void)
 	codCol = 0;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-	
+
+
+	// Apply rotation to the skybox
+	glm::mat4 skyboxRotation = glm::rotate(glm::mat4(1.0f), PI / 2, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 skyboxTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.55f));
+	glBindVertexArray(skyboxVAO);
+	glUseProgram(ProgramId2);
+	glDepthFunc(GL_LEQUAL);
+	view = glm::mat4(glm::mat3(view));
+	view = view * skyboxTranslation * skyboxRotation;
+	glUniformMatrix4fv(viewLocation2, 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projLocation2, 1, GL_FALSE, &projection[0][0]);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthFunc(GL_LESS);
+
+	glBindVertexArray(VaoId);
+	glUseProgram(ProgramId);
+
+
 	//vector random pt x,y
 	l = l + 0.8;
 
@@ -520,6 +668,7 @@ void RenderFunction(void)
 		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
 		DrawBalloon(myMatrix, colornumbers[i % 4]);
 	}
+
 
 	glutSwapBuffers();
 	glFlush();
