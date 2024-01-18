@@ -1,12 +1,4 @@
-//
-// ================================================
-// | Grafica pe calculator                        |
-// ================================================
-// | Laboratorul XI - 11_01_Shader.frag |
-// ======================================
-// 
 //  Shaderul de fragment / Fragment shader - afecteaza culoarea pixelilor;
-//
 
 #version 330 core
  
@@ -43,6 +35,7 @@ void main(void)
     vec3 specular = specularStrength * spec * lightColor;  
     vec3 emission=vec3(0.0, 0.0, 0.0);
     vec3 result = emission+(ambient + diffuse + specular);
+
     if (codCol==0) // pentru codCol==0 este aplicata iluminarea
     {
         result *= ex_Color;
@@ -63,11 +56,22 @@ void main(void)
         result *= vec3(1.0f, 1.0f, 0.0f);
     }
 
+    if (codCol==5) 
+    {
+        result *= vec3(1.0f, 1.0f, 1.0f);
+    }
+
     out_Color = vec4(result, 1.0f);
 
     if (codCol==1) // pentru codCol==1 este desenata umbra
     {
         vec3 black = vec3 (0.0, 0.0, 0.0);
 		out_Color = vec4 (black, 1.0);
-     }
+    }
+
+    if (codCol==6) 
+    {
+        vec3 gri = vec3 (0.4, 0.4, 0.4);
+		out_Color = vec4 (gri, 1.0);
+    }
   }

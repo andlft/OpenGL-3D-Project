@@ -1,19 +1,6 @@
-﻿//
-// ================================================
-// | Grafica pe calculator                        |
-// ================================================
-// | Laboratorul XI - 11_01_umbra.cpp |
-// ====================================
-// 
-//	Program ce deseneaza o casa si care suprinde efectele de umbrire folosindu-se tehnicile MODERN OpenGL; 
-//	Elemente de NOUTATE (modelul de iluminare):
-//	 - pentru a genera umbra unei surse este utilizata o matrice 4x4;
-//	 - in shaderul de varfuri este inclusa si matricea umbrei;
-//	 - in shaderul de fragment umbra este colorata separat;
-//	 - sursa de lumina este punctuala(varianta de sursa directionala este comentata);
+﻿// PROIECT 3D (Lefter Andrei, Rosianu Robert, Udrea Robert, Enescu Irina)
 // 
 //  
-// 
 //	Biblioteci
 #include <windows.h>        //	Utilizarea functiilor de sistem Windows (crearea de ferestre, manipularea fisierelor si directoarelor);
 #include <stdlib.h>         //  Biblioteci necesare pentru citirea shaderelor;
@@ -53,11 +40,14 @@ float PI = 3.141592;
 std::vector<int> colornumbers = { 0, 2, 3, 4 };
 std::vector<int> xpos(10001);
 std::vector<int> ypos(10001);
+std::vector<int> xcpos(10001);
+std::vector<int> ycpos(10001);
+std::vector<int> rotationpos(10001);
 float l = 0.0f, s = -100.0f, x = 1200.0f, y = 200.0f, l1 = -100.0f;
 int resetThreshold;
-int xposition, yposition, i, j, xmax, xmin, ymax, ymin, q;
+int xposition, yposition, i, j, xmax, xmin, ymax, ymin, xcmax, xcmin, ycmax, ycmin, q;
 // matrice utilizate
-glm::mat4 myMatrix, matrRot, matrTransl, resizeMatrix;
+glm::mat4 myMatrix, matrRot, matrTransl, resizeMatrix, savedMatrix;
 
 // elemente pentru matricea de vizualizare
 float Refx = 0.0f, Refy = 0.0f, Refz = 4000.0f;
@@ -136,10 +126,10 @@ void CreateVBO(void)
 	{
 		// coordonate                   // culori			// normale
 		// varfuri "ground"
-	   -150000.0f,  -150000.0f, -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
-		150000.0f,  -150000.0f, -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
-		150000.0f,  150000.0f,  -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
-	   -150000.0f,  150000.0f,  -600.0f, 1.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, 1.0f,
+	   -150000.0f,  -150000.0f, -600.0f, 1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+		150000.0f,  -150000.0f, -600.0f, 1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+		150000.0f,  150000.0f,  -600.0f, 1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+	   -150000.0f,  150000.0f,  -600.0f, 1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
 	   // varfuri cub
 		-50.0f,  -50.0f, -550.0f, 1.0f,   1.0f, 0.5f, 0.2f,  -1.0f, -1.0f, -1.0f,
 		 50.0f,  -50.0f,  -550.0f, 1.0f,  1.0f, 0.5f, 0.2f,  1.0f, -1.0f, -1.0f,
@@ -296,7 +286,7 @@ void DestroyVBO(void)
 
 void CreateShaders(void)
 {
-	ProgramId = LoadShaders("11_01_Shader.vert", "11_01_Shader.frag");
+	ProgramId = LoadShaders("Shader.vert", "Shader.frag");
 	glUseProgram(ProgramId);
 }
 
@@ -313,6 +303,8 @@ int getRandomNumber(const std::vector<int>& numbers) {
 void Initialize(void)
 {
 	myMatrix = glm::mat4(1.0f);
+	
+	// vector coordonate baloane 
 	xmax = 2000;
 	xmin = -2000;
 	ymax = 2000;
@@ -322,6 +314,19 @@ void Initialize(void)
 		xpos[j] = rand() % (xmax - xmin + 1) + xmin;
 		ypos[j] = rand() % (ymax - ymin + 1) + ymin;
 	}
+
+	// vector coordonate norisori
+	xcmax = 6000;
+	xcmin = -6000;
+	ycmax = 6000;
+	ycmin = -6000;
+	for (j = 1; j <= 175; j++)
+	{
+		xcpos[j] = rand() % (xcmax - xcmin + 1) + xcmin;
+		ycpos[j] = rand() % (ycmax - ycmin + 1) + ycmin;
+		rotationpos[j] = rand() % 100;
+	}
+
 	matrRot = glm::rotate(glm::mat4(1.0f), PI / 8, glm::vec3(0.0, 0.0, 1.0));
 	glClearColor(0.0f, 255.0f, 255.0f, 0.0f);
 	CreateVBO();
@@ -336,6 +341,20 @@ void Initialize(void)
 	viewPosLocation = glGetUniformLocation(ProgramId, "viewPos");
 	codColLocation = glGetUniformLocation(ProgramId, "codCol");
 }
+
+void DrawSphere()
+{
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
+	}
+}
+
 void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culoarea balonului => 0 - verde, 1 - umbra, 2 - rosu, 3 - albastru, 4 - galben
 {
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
@@ -365,15 +384,7 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, -75.0f));
 	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
-	{
-		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
-			glDrawElements(
-				GL_QUADS,
-				4,
-				GL_UNSIGNED_SHORT,
-				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
-	}
+	DrawSphere();
 
 	// desenare umbra cub
 	codCol = 1;
@@ -396,16 +407,60 @@ void DrawBalloon(glm::mat4 balloonMatrix, int codColor) //codCol selecteaza culo
 	//desenare umbra balon
 	myMatrix = glm::translate(balloonMatrix, glm::vec3(0.f, 0.f, -75.0f));
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	DrawSphere();
+}
+
+void DrawCloud(glm::mat4 cloudMatrix) 
+{	
+	codCol = 5;
+	glUniform1i(codColLocation, codCol);
+
+	myMatrix = glm::translate(cloudMatrix, glm::vec3(0.f, 0.f, 4000.0f));
+	myMatrix = glm::scale(myMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
+	savedMatrix = myMatrix;
+	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	for (int i = 0; i <= 3; i++)
 	{
-		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
-			glDrawElements(
-				GL_QUADS,
-				4,
-				GL_UNSIGNED_SHORT,
-				(void*)(((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) + 68) * sizeof(GLushort)));
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		myMatrix = glm::translate(savedMatrix, glm::vec3(0.f, 200.f, 0.0f));
+		myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		savedMatrix = myMatrix;
+		DrawSphere();
+
+		codCol = 6;
+		glUniform1i(codColLocation, codCol);
+		myMatrix = glm::translate(myMatrix, glm::vec3(0.f, 0.f, -75.0f));
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		DrawSphere();
+	}
+
+	myMatrix = glm::translate(cloudMatrix, glm::vec3(0.f, 0.f, 4000.0f));
+	myMatrix = glm::scale(myMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
+	savedMatrix = myMatrix;
+	myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+	for (int i = 0; i < 2; i++)
+	{
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		myMatrix = glm::translate(savedMatrix, glm::vec3(0.f, 250.f, 100.0f));
+		myMatrixLocation = glGetUniformLocation(ProgramId, "myMatrix");
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		savedMatrix = myMatrix;
+		DrawSphere();
+
+		codCol = 6;
+		glUniform1i(codColLocation, codCol);
+		myMatrix = glm::translate(savedMatrix, glm::vec3(0.f, 0.f, -75.0f));
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		savedMatrix = myMatrix;
+		DrawSphere();
 	}
 }
+
 void RenderFunction(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -443,8 +498,18 @@ void RenderFunction(void)
 	codCol = 0;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+	
 	//vector random pt x,y
 	l = l + 0.8;
+
+	for (int i = 1; i <= 175; i++) 
+	{
+		myMatrix = glm::rotate(glm::mat4(1.0f), (PI / 8) * rotationpos[i], glm::vec3(0.0f, 0.0f, 1.0f));
+		myMatrix = glm::translate(myMatrix, glm::vec3(xcpos[i], ycpos[i], std::fmod((50.0f + i * 1000), 10000.0f)));
+		glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
+		DrawCloud(myMatrix);
+	}	
+	
 	for (int i = 1; i <= 10; i++)
 	{
 		matrTransl = glm::translate(glm::mat4(1.0f), glm::vec3(xpos[i], ypos[i], std::fmod((l + i * 1000), 10000.0f)));
@@ -472,7 +537,7 @@ int main(int argc, char* argv[])
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(1200, 900);
-	glutCreateWindow("Iluminare - Umbre - OpenGL <<nou>>");
+	glutCreateWindow("Proiect 3D");
 	glewInit();
 	Initialize();
 	glutIdleFunc(RenderFunction);

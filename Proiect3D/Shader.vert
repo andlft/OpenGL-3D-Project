@@ -1,10 +1,3 @@
-//
-// ================================================
-// | Grafica pe calculator                        |
-// ================================================
-// | Laboratorul XI - 11_01_Shader.vert |
-// ======================================
-// 
 //  Shaderul de varfuri / Vertex shader - afecteaza geometria scenei; 
 
 #version 330 core
@@ -39,7 +32,7 @@ void main(void)
     dir = mat3(view*myMatrix) * vec3(0.0,100.0,200.0); // pentru sursa directionala
     FragPos = vec3(view*myMatrix*in_Position);
 
-	if (codCol==1)
+	if (codCol==1 || codCol==6)
 		gl_Position = projection*view*matrUmbra*myMatrix*in_Position;
         FragPos = vec3(view*myMatrix*in_Position);
    } 
