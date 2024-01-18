@@ -324,48 +324,49 @@ void CreateSkyboxVBO(void)
 {
 	GLfloat skyboxVertices[1000] = {
 		// skybox           
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		-1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		-1.0f, -1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
 
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f, -1.0f ,  1.0f,
+		-1.0f, -1.0f ,  1.0f,
 
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f , -1.0f,
+		 1.0f,  1.0f , -1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		 1.0f,  1.0f ,  1.0f,
+		-1.0f,  1.0f ,  1.0f,
+		-1.0f,  1.0f , -1.0f,
 
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
+		-1.0f, -1.0f , -1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		 1.0f, -1.0f , -1.0f,
+		 1.0f, -1.0f , -1.0f,
+		-1.0f, -1.0f ,  1.0f,
+		 1.0f, -1.0f ,  1.0f
 	};
+
 
 	// Create VBO
 
@@ -388,12 +389,12 @@ void CreateSkyboxVBO(void)
 	//skybox
 	std::vector<std::string> faces
 	{
-			"right.jpg",
-			"left.jpg",
-			"top.jpg",
-			"bottom.jpg",
-			"front.jpg",
-			"back.jpg"
+			"right3.jpg",
+			"left3.jpg",
+			"top3.jpg",
+			"bottom3.jpg",
+			"front4.jpg",
+			"back3.jpg"
 	};
 	cubemapTexture = loadCubemap(faces);
 };
@@ -485,7 +486,7 @@ void RenderFunction(void)
 	glUniform1i(codColLocation, codCol);
 	myMatrix = glm::mat4(1.0f);
 	glUniformMatrix4fv(myMatrixLocation, 1, GL_FALSE, &myMatrix[0][0]);
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)(6 * sizeof(GLushort)));
 
 	// desenare con
@@ -548,10 +549,14 @@ void RenderFunction(void)
 
 
 	//// ... set view and projection matrix
+	 // Apply rotation to the skybox
+	glm::mat4 skyboxRotation = glm::rotate(glm::mat4(1.0f), PI/2, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 skyboxTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.55f));
 	glBindVertexArray(skyboxVAO);
     glUseProgram(ProgramId2);
 	glDepthFunc(GL_LEQUAL);
 	view = glm::mat4(glm::mat3(view));
+	view = view * skyboxTranslation  * skyboxRotation;
 	glUniformMatrix4fv(viewLocation2, 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projLocation2, 1, GL_FALSE, &projection[0][0]);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
