@@ -316,11 +316,11 @@ void Initialize(void)
 	}
 
 	// vector coordonate norisori
-	xcmax = 15000;
-	xcmin = -15000;
-	ycmax = 15000;
-	ycmin = -15000;
-	for (j = 1; j <= 450; j++)
+	xcmax = 6000;
+	xcmin = -6000;
+	ycmax = 6000;
+	ycmin = -6000;
+	for (j = 1; j <= 175; j++)
 	{
 		xcpos[j] = rand() % (xcmax - xcmin + 1) + xcmin;
 		ycpos[j] = rand() % (ycmax - ycmin + 1) + ycmin;
@@ -502,7 +502,7 @@ void RenderFunction(void)
 	//vector random pt x,y
 	l = l + 0.8;
 
-	for (int i = 1; i <= 450; i++) 
+	for (int i = 1; i <= 175; i++) 
 	{
 		myMatrix = glm::rotate(glm::mat4(1.0f), (PI / 8) * rotationpos[i], glm::vec3(0.0f, 0.0f, 1.0f));
 		myMatrix = glm::translate(myMatrix, glm::vec3(xcpos[i], ycpos[i], std::fmod((50.0f + i * 1000), 10000.0f)));
